@@ -6,24 +6,136 @@
  * @flow
  */
 
-import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import React, {Component} from 'react'
+import {
+  Image,
+  TouchableHighlight,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native'
+import { StackNavigator } from 'react-navigation'
+import { createStackNavigator } from 'react-navigation';
+import { createAppContainer } from 'react-navigation';
+import YouTube from 'react-native-youtube'
+import Icon from 'react-native-vector-icons/MaterialIcons'
+import Icons from 'react-native-vector-icons/MaterialCommunityIcons'
+import YouTubeVideo from './YouTubeVideo'
 
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+const apiKey = 'AIzaSyBfYeyN-_gdDYb_vcnZPeXGCHU_KM_OssE'
+const channelId = 'UCQzdMyuz0Lf4zo4uGcEujFw'
+const results = 30
 
-type Props = {};
-export default class App extends Component<Props> {
+class App extends Component {
+
+  static navigationOptions = {
+    headerStyle: {
+      backgroundColor: '#fff'
+    },
+    headerLeft: (
+      <TouchableOpacity>
+        <Image
+          style={{height: 22, width: 98, color: '#fff', marginLeft: 25}}
+          source={require('./images/youtube.png')}/>
+      </TouchableOpacity>
+    ),
+    headerRight: (
+      <View style={{ flexDirection: 'row', marginLeft: 20 }}>
+        <TouchableOpacity style={{paddingHorizontal: 5}}>
+          <Icon name='cast-connected' size={25} color={'#555'}/>
+        </TouchableOpacity>
+        <TouchableOpacity style={{paddingHorizontal: 5}}>
+          <Icon name='videocam' size={25} color={'#555'}/>
+        </TouchableOpacity>
+        <TouchableOpacity style={{paddingHorizontal: 5}}>
+          <Icon name='search' size={25} color={'#555'}/>
+        </TouchableOpacity>
+        <TouchableOpacity style={{paddingHorizontal: 5}}>
+          <Icon name='account-circle' size={25} color={'#555'}/>
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  constructor(props) {
+    super(props)
+    this.state = {
+      data: []
+    }
+  }
+
+  componentDidMount() {
+    let url = `https://www.googleapis.com/youtube/v3/search/?key=${apiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=${results}`
+    fetch(url)
+      .then(response => response.json())
+      .then(json => {
+        const videoId = []
+        json.items.forEach(item => {
+          videoId.push(item)
+        })
+        this.setState({
+          data: videoId
+        })
+      })
+      .catch(error => {
+        console.error(error)
+      })
+  }
+
   render() {
+    const {navigate} = this.props.navigation
     return (
       <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to React Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
+        <ScrollView>
+          <View style={styles.body}>
+            {this.state.data.map((item, i) => 
+              <TouchableHighlight
+                key={item.id.videoId}
+                onPress={() => this.props.navigation.navigate('YouTubeVideo', {youtubeId: item.id.videoId})}>
+                <View style={styles.vids}>
+                <Image
+                    source={{uri: item.snippet.thumbnails.medium.url}}
+                    style={{width: 320, height: 180}}/>
+                <View style={styles.vidItems}>
+                  <Image
+                    source={require('./images/NightKing.jpg')}
+                    style={{width: 40, height: 40, borderRadius: 20, marginRight: 5}}/>
+                  <Text style={styles.vidText}>{item.snippet.title}</Text>
+                  <Icon name='more-vert' size={20} color='#555'></Icon>
+                </View>
+              </View>                
+            </TouchableHighlight>    
+            )}
+          </View>
+        </ScrollView>
+        <View style={styles.tabBar}>
+          <TouchableOpacity style={styles.tabItems}>
+            <Icon name='home' size={25} color={'#444'}/>
+            <Text style={styles.tabTitle}>Home</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.tabItems}>
+            <Icon name='whatshot' size={25} color={'#444'}/>
+            <Text style={styles.tabTitle}>Trending</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.tabItems}>
+            <Icon name='subscriptions' size={25} color={'#444'}/>
+            <Text style={styles.tabTitle}>Subscriptions</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.tabItems}>
+            <Icon name='bell' size={25} color={'#444'}/>
+            <Text style={styles.tabTitle}>Activity</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.tabItems}>
+            <Icon name='folder' size={25} color={'#444'}/>
+            <Text style={styles.tabTitle}>Library</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -32,18 +144,68 @@ export default class App extends Component<Props> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  body: {
+    flex: 1,
+    backgroundColor: '#fff',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
+    padding: 30,
   },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
+  vids: {
+    paddingBottom: 30,
+    width: 320,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    borderBottomWidth: 0.6,
+    borderColor: '#aaa',
   },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
+  vidItems: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    padding: 10,
   },
+  vidText: {
+    padding: 20,
+    color: '#000',
+  },
+  tabBar: {
+    backgroundColor: '#fff',
+    height: 70,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    borderTopWidth: 0.5,
+    borderColor: '#bbb'
+  },
+  tabItems: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 5
+  },
+  tabTitle: {
+    fontSize: 11,
+    color: '#333',
+    paddingTop: 4,
+    textDecorationLine: 'underline'
+  }
 });
+
+/* export default screens = StackNavigator({
+  Home: { screen: App },
+  YouTubeVideo: { screen: YouTubeVideo }
+}) */
+
+const AppNavigator = createStackNavigator(
+  {
+    App: { screen: App },
+    YouTubeVideo: { screen: YouTubeVideo }
+  },
+  {
+    initialRouteName: 'App',
+    headerMode: 'none'
+  }    
+);
+const AppContainer = createAppContainer(AppNavigator);
+
+export default AppContainer;
